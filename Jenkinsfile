@@ -7,8 +7,8 @@ pipeline {
     }
 
     environment {
-        BACKEND_DIR = 'crud_backend/crud_backend-main'
-        FRONTEND_DIR = 'crud_frontend/crud_frontend-main'
+        BACKEND_DIR = 'crud_backend\\crud_backend-main'
+        FRONTEND_DIR = 'crud_frontend\\crud_frontend-main'
 
         TOMCAT_URL = 'http://localhost:9090'
         TOMCAT_USER = 'admin'
@@ -30,10 +30,10 @@ pipeline {
                 dir("${env.FRONTEND_DIR}") {
                     script {
                         def nodeHome = tool name: 'NODE_HOME', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-                        env.PATH = "${nodeHome}/bin:${env.PATH}"
+                        env.PATH = "${nodeHome}\\;${nodeHome}\\bin;${env.PATH}"
                     }
-                    sh 'npm install'
-                    sh 'npm run build'
+                    bat 'npm install'
+                    bat 'npm run build'
                 }
             }
         }
@@ -41,10 +41,10 @@ pipeline {
         stage('Package Frontend as WAR') {
             steps {
                 dir("${env.FRONTEND_DIR}") {
-                    sh """
-                        mkdir -p frontapp1_war/WEB-INF
-                        cp -r dist/* frontapp1_war/
-                        jar -cvf ../../${FRONTEND_WAR} -C frontapp1_war .
+                    bat """
+                        if not exist frontapp1_war mkdir frontapp1_war\\WEB-INF
+                        xcopy /E /I /Y dist frontapp1_war
+                        jar -cvf ..\\..\\${FRONTEND_WAR} -C frontapp1_war .
                     """
                 }
             }
@@ -53,33 +53,29 @@ pipeline {
         stage('Build Backend (Spring Boot WAR)') {
             steps {
                 dir("${env.BACKEND_DIR}") {
-                    sh 'mvn clean package'
-                    sh "cp target/*.war ../../${BACKEND_WAR}"
+                    bat 'mvn clean package'
+                    bat "copy target\\*.war ..\\..\\${BACKEND_WAR}"
                 }
             }
         }
 
         stage('Deploy Backend to Tomcat (/springapp1)') {
             steps {
-                script {
-                    sh """
-                        curl -u ${TOMCAT_USER}:${TOMCAT_PASS} \\
-                          --upload-file ${BACKEND_WAR} \\
-                          "${TOMCAT_URL}/deploy?path=/springapp1&update=true"
-                    """
-                }
+                bat """
+                    curl -u ${TOMCAT_USER}:${TOMCAT_PASS} ^
+                      --upload-file ${BACKEND_WAR} ^
+                      "${TOMCAT_URL}/deploy?path=/springapp1&update=true"
+                """
             }
         }
 
         stage('Deploy Frontend to Tomcat (/frontapp1)') {
             steps {
-                script {
-                    sh """
-                        curl -u ${TOMCAT_USER}:${TOMCAT_PASS} \\
-                          --upload-file ${FRONTEND_WAR} \\
-                          "${TOMCAT_URL}/deploy?path=/frontapp1&update=true"
-                    """
-                }
+                bat """
+                    curl -u ${TOMCAT_USER}:${TOMCAT_PASS} ^
+                      --upload-file ${FRONTEND_WAR} ^
+                      "${TOMCAT_URL}/deploy?path=/frontapp1&update=true"
+                """
             }
         }
     }
