@@ -10,9 +10,7 @@ pipeline {
         BACKEND_DIR = 'crud_backend\\crud_backend-main'
         FRONTEND_DIR = 'crud_frontend\\crud_frontend-main'
 
-        TOMCAT_URL = 'http://localhost:9090'
-        TOMCAT_USER = 'admin'
-        TOMCAT_PASS = 'admin'
+        TOMCAT_WEBAPPS = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 9.0\\webapps'
 
         BACKEND_WAR = 'springapp1.war'
         FRONTEND_WAR = 'frontapp1.war'
@@ -59,22 +57,11 @@ pipeline {
             }
         }
 
-        stage('Deploy Backend to Tomcat (/springapp1)') {
+        stage('Deploy WARs to Tomcat webapps') {
             steps {
                 bat """
-                    curl -u ${TOMCAT_USER}:${TOMCAT_PASS} ^
-                      --upload-file ${BACKEND_WAR} ^
-                      "${TOMCAT_URL}/deploy?path=/springapp1&update=true"
-                """
-            }
-        }
-
-        stage('Deploy Frontend to Tomcat (/frontapp1)') {
-            steps {
-                bat """
-                    curl -u ${TOMCAT_USER}:${TOMCAT_PASS} ^
-                      --upload-file ${FRONTEND_WAR} ^
-                      "${TOMCAT_URL}/deploy?path=/frontapp1&update=true"
+                    copy /Y ${BACKEND_WAR} "${TOMCAT_WEBAPPS}\\${BACKEND_WAR}"
+                    copy /Y ${FRONTEND_WAR} "${TOMCAT_WEBAPPS}\\${FRONTEND_WAR}"
                 """
             }
         }
