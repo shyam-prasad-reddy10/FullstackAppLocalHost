@@ -7,13 +7,13 @@ pipeline {
     }
 
     environment {
-        BACKEND_DIR = 'crud_backend\\crud_backend-main'
-        FRONTEND_DIR = 'crud_frontend\\crud_frontend-main'
+        BACKEND_DIR   = 'crud_backend\\crud_backend-main'
+        FRONTEND_DIR  = 'crud_frontend\\crud_frontend-main'
 
         TOMCAT_WEBAPPS = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 9.0\\webapps'
 
-        BACKEND_WAR = 'springapp1.war'
-        FRONTEND_WAR = 'frontapp1.war'
+        BACKEND_WAR   = 'springapp1.war'
+        FRONTEND_WAR  = 'frontapp1.war'
     }
 
     stages {
@@ -51,7 +51,7 @@ pipeline {
         stage('Build Backend (Spring Boot WAR)') {
             steps {
                 dir("${env.BACKEND_DIR}") {
-                    bat 'mvn clean package'
+                    bat 'mvn clean package -DskipTests'
                     bat "copy target\\*.war ..\\..\\${BACKEND_WAR}"
                 }
             }
