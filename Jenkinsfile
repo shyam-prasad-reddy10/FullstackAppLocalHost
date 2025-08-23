@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK_HOME'
-        maven 'MAVEN_HOME'
+        jdk 'JDK_HOME'        // same as in your Jenkins tool config
+        maven 'MAVEN_HOME'    // same as in your Jenkins tool config
     }
 
     environment {
@@ -40,7 +40,8 @@ pipeline {
             steps {
                 dir("${env.FRONTEND_DIR}") {
                     bat """
-                        if not exist frontapp1_war mkdir frontapp1_war\\WEB-INF
+                        if exist frontapp1_war rmdir /S /Q frontapp1_war
+                        mkdir frontapp1_war\\WEB-INF
                         xcopy /E /I /Y dist frontapp1_war
                         jar -cvf ..\\..\\${FRONTEND_WAR} -C frontapp1_war .
                     """
@@ -52,7 +53,7 @@ pipeline {
             steps {
                 dir("${env.BACKEND_DIR}") {
                     bat 'mvn clean package -DskipTests'
-                    bat "copy target\\*.war ..\\..\\${BACKEND_WAR}"
+                    bat "copy /Y target\\*.war ..\\..\\${BACKEND_WAR}"
                 }
             }
         }
