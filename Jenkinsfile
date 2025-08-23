@@ -4,6 +4,7 @@ pipeline {
     tools {
         jdk 'JDK_HOME'
         maven 'MAVEN_HOME'
+        nodejs 'NODE_HOME'
     }
 
     environment {
@@ -26,10 +27,6 @@ pipeline {
         stage('Build Frontend (Vite)') {
             steps {
                 dir("${env.FRONTEND_DIR}") {
-                    script {
-                        def nodeHome = tool name: 'NODE_HOME', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-                        env.PATH = "${nodeHome}\\;${nodeHome}\\bin;${env.PATH}"
-                    }
                     bat 'npm install'
                     bat 'npm run build'
                 }
@@ -52,9 +49,18 @@ pipeline {
             steps {
                 dir("${env.BACKEND_DIR}") {
                     bat 'mvn clean package -DskipTests'
-                    // FIXED: no "f was unexpected" issue
-                    bat "copy /Y target\\*.war ..\\..\\${BACKEND_WAR}"
+                    // Copy only the real backend WAR
+                    bat "copy /Y target\\springapp1.war ..\\..\\${BACKEND_WAR}"
                 }
+            }
+        }
+
+        stage('Clean Tomcat') {
+            steps {
+                bat """
+                    del /Q "${TOMCAT_WEBAPPS}\\springapp1*"
+                    del /Q "${TOMCAT_WEBAPPS}\\frontapp1*"
+                """
             }
         }
 
