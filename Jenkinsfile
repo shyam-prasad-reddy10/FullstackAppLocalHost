@@ -42,9 +42,7 @@ pipeline {
                     bat """
                         if not exist frontapp1_war mkdir frontapp1_war\\WEB-INF
                         xcopy /E /I /Y dist frontapp1_war
-                        jar -cvf ..\\..\\temp_frontend.war -C frontapp1_war .
-                        copy /Y ..\\..\\temp_frontend.war ..\\..\\${FRONTEND_WAR}
-                        del ..\\..\\temp_frontend.war
+                        jar -cvf ..\\..\\${FRONTEND_WAR} -C frontapp1_war .
                     """
                 }
             }
@@ -54,11 +52,7 @@ pipeline {
             steps {
                 dir("${env.BACKEND_DIR}") {
                     bat 'mvn clean package -DskipTests'
-                    bat """
-                        for %%F in (target\\*.war) do (
-                            copy /Y "%%F" ..\\..\\${BACKEND_WAR}
-                        )
-                    """
+                    bat "copy target\\*.war ..\\..\\${BACKEND_WAR}"
                 }
             }
         }
@@ -66,6 +60,13 @@ pipeline {
         stage('Deploy WARs to Tomcat webapps') {
             steps {
                 bat """
+                    echo Cleaning old deployments...
+                    rmdir /S /Q "${TOMCAT_WEBAPPS}\\springapp1"
+                    rmdir /S /Q "${TOMCAT_WEBAPPS}\\frontapp1"
+                    del /Q "${TOMCAT_WEBAPPS}\\springapp1.war"
+                    del /Q "${TOMCAT_WEBAPPS}\\frontapp1.war"
+
+                    echo Copying new WARs...
                     copy /Y ${BACKEND_WAR} "${TOMCAT_WEBAPPS}\\${BACKEND_WAR}"
                     copy /Y ${FRONTEND_WAR} "${TOMCAT_WEBAPPS}\\${FRONTEND_WAR}"
                 """
