@@ -51,11 +51,9 @@ pipeline {
         stage('Build Backend (Spring Boot WAR)') {
             steps {
                 dir("${env.BACKEND_DIR}") {
-                    // Let Maven produce the WAR — don’t repackage manually
                     bat 'mvn clean package -DskipTests'
-
-                    // Copy the WAR from target to root
-                    bat "for %f in (target\\*.war) do copy /Y %f ..\\..\\${BACKEND_WAR}"
+                    // FIXED: no "f was unexpected" issue
+                    bat "copy /Y target\\*.war ..\\..\\${BACKEND_WAR}"
                 }
             }
         }
