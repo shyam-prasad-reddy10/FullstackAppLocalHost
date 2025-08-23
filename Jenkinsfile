@@ -4,7 +4,6 @@ pipeline {
     tools {
         jdk 'JDK_HOME'
         maven 'MAVEN_HOME'
-        nodejs 'NODE_HOME'
     }
 
     environment {
@@ -27,6 +26,10 @@ pipeline {
         stage('Build Frontend (Vite)') {
             steps {
                 dir("${env.FRONTEND_DIR}") {
+                    script {
+                        def nodeHome = tool name: 'NODE_HOME', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                        env.PATH = "${nodeHome}\\;${nodeHome}\\bin;${env.PATH}"
+                    }
                     bat 'npm install'
                     bat 'npm run build'
                 }
@@ -39,7 +42,9 @@ pipeline {
                     bat """
                         if not exist frontapp1_war mkdir frontapp1_war\\WEB-INF
                         xcopy /E /I /Y dist frontapp1_war
-                        jar -cvf ..\\..\\${FRONTEND_WAR} -C frontapp1_war .
+                        jar -cvf ..\\..\\temp_frontend.war -C frontapp1_war .
+                        copy /Y ..\\..\\temp_frontend.war ..\\..\\${FRONTEND_WAR}
+                        del ..\\..\\temp_frontend.war
                     """
                 }
             }
@@ -49,18 +54,12 @@ pipeline {
             steps {
                 dir("${env.BACKEND_DIR}") {
                     bat 'mvn clean package -DskipTests'
-                    // Copy only the real backend WAR
-                    bat "copy /Y target\\springapp1.war ..\\..\\${BACKEND_WAR}"
+                    bat """
+                        for %%F in (target\\*.war) do (
+                            copy /Y "%%F" ..\\..\\${BACKEND_WAR}
+                        )
+                    """
                 }
-            }
-        }
-
-        stage('Clean Tomcat') {
-            steps {
-                bat """
-                    del /Q "${TOMCAT_WEBAPPS}\\springapp1*"
-                    del /Q "${TOMCAT_WEBAPPS}\\frontapp1*"
-                """
             }
         }
 
