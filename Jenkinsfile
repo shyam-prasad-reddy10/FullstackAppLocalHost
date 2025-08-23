@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK_HOME'        // same as in your Jenkins tool config
-        maven 'MAVEN_HOME'    // same as in your Jenkins tool config
+        jdk 'JDK_HOME'
+        maven 'MAVEN_HOME'
     }
 
     environment {
@@ -40,8 +40,7 @@ pipeline {
             steps {
                 dir("${env.FRONTEND_DIR}") {
                     bat """
-                        if exist frontapp1_war rmdir /S /Q frontapp1_war
-                        mkdir frontapp1_war\\WEB-INF
+                        if not exist frontapp1_war mkdir frontapp1_war\\WEB-INF
                         xcopy /E /I /Y dist frontapp1_war
                         jar -cvf ..\\..\\${FRONTEND_WAR} -C frontapp1_war .
                     """
@@ -52,8 +51,11 @@ pipeline {
         stage('Build Backend (Spring Boot WAR)') {
             steps {
                 dir("${env.BACKEND_DIR}") {
+                    // Let Maven produce the WAR — don’t repackage manually
                     bat 'mvn clean package -DskipTests'
-                    bat "copy /Y target\\*.war ..\\..\\${BACKEND_WAR}"
+
+                    // Copy the WAR from target to root
+                    bat "for %f in (target\\*.war) do copy /Y %f ..\\..\\${BACKEND_WAR}"
                 }
             }
         }
